@@ -11,7 +11,7 @@
     <category citation-format="numeric"/>
     <category field="engineering"/>
     <summary>长江大学硕士学位论文排版格式要求（20161122理工农医类）</summary>
-    <updated>2025-11-06T23:47:17+08:00</updated>
+    <updated>2025-11-07T16:45:17+08:00</updated>
     <rights license="http://creativecommons.org/licenses/by-sa/3.0/">This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 License</rights>
   </info>
 
@@ -34,13 +34,16 @@
       <date-part name="day" form="numeric-leading-zeros" prefix="-" range-delimiter="-"/>
     </date>
     <terms>
-      <term name="open-quote">“</term>
-      <term name="close-quote">”</term>
-      <term name="open-inner-quote">‘</term>
-      <term name="close-inner-quote">’</term>
+      <term name="open-quote">"</term>
+      <term name="close-quote">"</term>
+      <term name="open-inner-quote">'</term>
+      <term name="close-inner-quote">'</term>
       <term name="edition" form="short">版</term>
       <term name="citation-range-delimiter">-</term>
       <term name="page-range-delimiter">-</term>
+      <term name="and">, </term>
+      <term name="issued">: </term>
+      <term name="page">: </term>
     </terms>
   </locale>
 
@@ -61,9 +64,10 @@
       </substitute>
     </names>
   </macro>
+
   <!-- 题名 -->
   <macro name="title">
-    <group delimiter=", ">
+    <group delimiter=". ">
       <group delimiter=": ">
         <text variable="title"/>
         <group delimiter=" ">
@@ -244,7 +248,7 @@
           <text variable="container-title"/>
           <text macro="issued-date"/>
         </group>
-        <text variable="page" prefix="(" suffix=")"/>
+        <text variable="page" prefix=" (" suffix=")"/>
       </if>
       <else>
         <group delimiter=": ">
@@ -317,7 +321,7 @@
           <if type="dataset post post-weblog software webpage" match="any">
             <choose>
               <if has-day="issued">
-                <text macro="issued-date" prefix="(" suffix=")"/>
+                <text macro="issued-date" prefix="(" suffix=") "/>
               </if>
               <else-if variable="issued">
                 <text macro="issued-year"/>
@@ -366,7 +370,7 @@
       <if type="dataset post post-weblog software webpage" match="any">
         <choose>
           <if variable="URL">
-            <date variable="accessed" form="numeric" prefix="[" suffix="]"/>
+            <date variable="accessed" form="numeric" prefix="[" suffix="] "/>
           </if>
         </choose>
       </if>
@@ -382,7 +386,7 @@
     </choose>
   </macro>
 
-  <!-- 参考文献表格式 -->
+  <!-- 参考文献表格式 - 修复会议论文和学位论文 -->
   <macro name="entry-layout">
     <group delimiter=". ">
       <text macro="author"/>
@@ -397,24 +401,91 @@
           <text macro="container-periodical"/>
         </else-if>
         <else-if type="patent">
-          <text macro="title"/>
-          <text macro="publisher"/>
+          <!-- 专利格式：专利申请者. 专利题名[P]. 专利国别, 专利文献种类, 专利号, 日期. -->
+          <group delimiter=". ">
+            <text macro="author"/>
+            <group>
+              <text variable="title"/>
+              <text value="P" prefix="[" suffix="]"/>
+            </group>
+            <group delimiter=", ">
+              <choose>
+                <if variable="jurisdiction">
+                  <text variable="jurisdiction"/>
+                </if>
+                <else-if variable="publisher-place">
+                  <text variable="publisher-place"/>
+                </else-if>
+              </choose>
+              <choose>
+                <if variable="genre">
+                  <text variable="genre"/>
+                </if>
+                <else>
+                  <text value="专利"/>
+                </else>
+              </choose>
+              <text variable="number"/>
+              <text macro="issued-date"/>
+            </group>
+          </group>
         </else-if>
         <else-if type="dataset post post-weblog software webpage" match="any">
           <text macro="title"/>
           <text macro="publisher"/>
         </else-if>
         <else-if type="thesis">
-          <!-- 学位论文特殊格式：标题[D] -->
+          <!-- 学位论文格式：作者. 题名[D]: [学位论文]. 保存地点: 保存单位, 年份. -->
+          <!-- 修复：避免多余的句点 -->
           <group>
             <text variable="title"/>
-            <group prefix="[" suffix="]">
-              <text macro="type-id"/>
-            </group>
+            <text value="D" prefix="[" suffix="]:"/>
+            <choose>
+              <if variable="genre">
+                <text variable="genre" prefix="[" suffix="]"/>
+              </if>
+              <else>
+                <text value="学位论文" prefix="[" suffix="]"/>
+              </else>
+            </choose>
           </group>
-          <text macro="publisher"/>
+          <group delimiter=": ">
+            <text variable="publisher-place"/>
+            <text variable="publisher"/>
+          </group>
+          <text macro="issued-year"/>
         </else-if>
-        <else-if type="chapter paper-conference" match="any">
+        <else-if type="paper-conference">
+          <choose>
+            <!-- 中文会议论文 -->
+            <if locale="zh">
+              <!-- 修复：移除重复的作者 -->
+              <group>
+                <text variable="title"/>
+                <text value="A" prefix="[" suffix="]"/>
+              </group>
+              <group prefix="见: ">
+                <text macro="container-contributors"/>
+                <text variable="container-title" suffix="[C]"/>
+              </group>
+              <text macro="publisher"/>
+            </if>
+            <!-- 英文会议论文 -->
+            <else>
+              <!-- 修复：移除重复的作者 -->
+              <group>
+                <text variable="title"/>
+                <text value="A" prefix="[" suffix="]"/>
+              </group>
+              <group prefix="In: ">
+                <text macro="container-contributors"/>
+                <text variable="container-title" suffix="[C]"/>
+              </group>
+              <text macro="publisher"/>
+            </else>
+          </choose>
+        </else-if>
+        <else-if type="chapter" match="any">
           <group delimiter="//">
             <group delimiter=". ">
               <text macro="title"/>
